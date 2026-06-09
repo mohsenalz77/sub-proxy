@@ -53,20 +53,21 @@ export default async (req, context) => {
     
     try {
       const decodedText = Buffer.from(rawData, 'base64').toString('utf-8').trim();
-      const lines = decodedText.split('\n').filter(l => l.trim() !== '');
       
-      if (lines.length > 0) {
-        lines.forEach(line => {
-          if (line.startsWith('vless://') || line.startsWith('vmess://') || line.startsWith('trojan://') || line.startsWith('ss://')) {
-            hasConfigs = true;
+      // شرط بسیار سخت‌گیرانه: فقط وجود پروتکل‌های واقعی نشانه فعال بودن است
+      if (decodedText.includes('vless://') || decodedText.includes('vmess://') || decodedText.includes('trojan://') || decodedText.includes('ss://')) {
+        hasConfigs = true;
+      }
+
+      const lines = decodedText.split('\n');
+      for (let line of lines) {
+        if (line.includes('activity') || line.includes('last') || line.includes('%D9%81%D8%B9%D8%A7%D9%84%D9%8A%D8%AA')) { 
+          const decodedLine = decodeURIComponent(line);
+          if (decodedLine.includes('#')) {
+            realLastActivity = decodedLine.split('#')[1].trim();
+            break;
           }
-          if (line.includes('activity') || line.includes('last') || line.includes('%D9%81%D8%B9%D8%A7%D9%84%D9%8A%D8%AA')) { 
-            const decodedLine = decodeURIComponent(line);
-            if (decodedLine.includes('#')) {
-              realLastActivity = decodedLine.split('#')[1].trim();
-            }
-          }
-        });
+        }
       }
     } catch (e) {}
 
@@ -77,6 +78,7 @@ export default async (req, context) => {
       realLastActivity = `${now.toLocaleDateString('fa-IR', dateOptions)}، ساعت ${now.toLocaleTimeString('fa-IR', options)}`;
     }
 
+    // شرط نهایی هوشمند: پاسخ ۲۰۰ + داشتن ترافیک باقیمانده + داشتن حداقل یک کانفیگ واقعی و زنده
     const isUserActive = response.status === 200 && (totalBytes === 0 || remBytes > 0) && hasConfigs;
     const statusText = isUserActive ? "اشتراک فعال و متصل" : "اشتراک غیرفعال / منقضی شده";
     const statusColor = isUserActive ? "#00f2fe" : "#ff007f";
@@ -109,11 +111,8 @@ export default async (req, context) => {
               .info-item.highlight strong { color: #00f2fe; font-weight: 700; }
               .progress-container { background: rgba(22, 27, 54, 0.5); border-radius: 18px; padding: 20px; margin-bottom: 35px; border: 1px solid rgba(255, 255, 255, 0.05); text-align: right; }
               .progress-label { display: flex; justify-content: space-between; font-size: 0.9rem; color: #7687a6; margin-bottom: 12px; }
-              
-              /* چپ به راست کردن ساختار نوار ترافیک */
               .progress-bar-bg { background: #07080f; border-radius: 12px; height: 14px; width: 100%; overflow: hidden; display: flex; justify-content: flex-start; direction: ltr; }
               .progress-bar-fill { background: linear-gradient(90deg, #9d4edd 0%, #00f2fe 100%); height: 100%; width: ${percentUsed}%; box-shadow: 0 0 15px rgba(0, 242, 254, 0.5); }
-              
               .qr-box { background: white; padding: 16px; border-radius: 20px; display: inline-block; margin-bottom: 35px; }
               .btn { background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%); color: #050609; border: none; padding: 15px 25px; border-radius: 14px; font-weight: 700; cursor: pointer; width: 100%; font-size: 1.05rem; box-shadow: 0 5px 15px rgba(0, 242, 254, 0.3); margin-bottom: 35px; font-family: 'Vazirmatn', sans-serif; }
               .apps-section { border-top: 1px solid rgba(255, 255, 255, 0.06); padding-top: 30px; }
