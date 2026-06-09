@@ -20,7 +20,8 @@ export default async (req, context) => {
 
     const headers = new Headers({
       'Content-Type': 'text/plain; charset=utf-8',
-      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
+      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+      'profile-title': 'sibvpn' // 👈 اسم برندت را اینجا بنویس (مثلاً SibVPN)
     });
 
     // انتقال اطلاعات حجم و زمان به نرم‌افزار کاربر
