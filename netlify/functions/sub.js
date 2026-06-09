@@ -1,7 +1,6 @@
 export default async (req, context) => {
   const PANEL_BASE_URL = 'https://sub.dr-sib.fun:2096'; 
   
-  // ⚠️ آیدی تلگرام پشتیبانی و کانال خود را اینجا بدون @ وارد کنید:
   const TELEGRAM_SUPPORT = 'Sibvpn_support'; 
   const TELEGRAM_CHANNEL = 'sibvpn'; 
 
@@ -47,12 +46,11 @@ export default async (req, context) => {
       percentUsed = Math.min(((usedBytes / totalBytes) * 100), 100).toFixed(1);
     }
     
-    // تعیین رنگ نوار حجم بر اساس میزان مصرف
-    let progressBarColor = "linear-gradient(90deg, #00f2fe 0%, #4facfe 100%)"; // فیروزه‌ای (پیش‌فرض زیر ۵۰ درصد)
+    let progressBarColor = "linear-gradient(90deg, #00f2fe 0%, #4facfe 100%)"; 
     if (percentUsed >= 50 && percentUsed < 80) {
-      progressBarColor = "linear-gradient(90deg, #f7971e 0%, #ffd200 100%)"; // نارنجی (بین ۵۰ تا ۸۰ درصد)
+      progressBarColor = "linear-gradient(90deg, #f7971e 0%, #ffd200 100%)"; 
     } else if (percentUsed >= 80) {
-      progressBarColor = "linear-gradient(90deg, #ff007f 0%, #ff0055 100%)"; // قرمز (بالای ۸۰ درصد)
+      progressBarColor = "linear-gradient(90deg, #ff007f 0%, #ff0055 100%)"; 
     }
     
     let expireDate = "نامحدود";
@@ -99,55 +97,60 @@ export default async (req, context) => {
       <html lang="fa" dir="rtl">
       <head>
           <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
           <title>داشبورد اختصاصی SibVPN</title>
           <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
           <style>
               @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;700&display=swap');
-              body { background: radial-gradient(circle at 50% 50%, #121526 0%, #050609 100%); color: #f1f3f9; font-family: 'Vazirmatn', system-ui, sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; line-height: 1.6; }
-              .card { background: rgba(13, 16, 33, 0.65); border: 1px solid rgba(0, 242, 254, 0.4); box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 242, 254, 0.15); border-radius: 28px; padding: 40px 30px; max-width: 470px; width: 100%; text-align: center; backdrop-filter: blur(20px); }
-              h1 { color: #00f2fe; text-shadow: 0 0 15px rgba(0, 242, 254, 0.6); font-size: 2.8rem; font-weight: 700; margin: 0; }
-              .brand-badge { font-size: 0.75rem; background: rgba(0, 242, 254, 0.1); border: 1px solid #00f2fe; color: #00f2fe; padding: 2px 10px; border-radius: 10px; display: inline-block; margin-bottom: 5px; text-transform: uppercase; font-weight: 700; }
-              .subtitle { color: #6f7d99; font-size: 0.95rem; margin-bottom: 30px; }
-              .status-badge { display: inline-flex; align-items: center; gap: 12px; background: rgba(18, 22, 43, 0.7); padding: 10px 24px; border-radius: 50px; border: 1px solid ${statusColor}; font-size: 0.9rem; margin-bottom: 30px; box-shadow: 0 0 10px rgba(${isUserActive ? '0,242,254' : '255,0,127'}, 0.2); }
-              .status-dot { width: 9px; height: 9px; background-color: ${statusColor}; border-radius: 50%; box-shadow: 0 0 12px ${statusColor}, 0 0 25px ${statusColor}; animation: neonPulse 2s infinite ease-in-out; }
-              @keyframes neonPulse { 0%, 100% { transform: scale(0.9); opacity: 0.5; } 50% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 15px ${statusColor}; } }
-              .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 25px; }
-              .info-item { background: rgba(22, 27, 54, 0.5); padding: 14px 16px; border-radius: 18px; border: 1px solid rgba(255, 255, 255, 0.05); text-align: right; }
-              .full-width { grid-column: span 2; }
-              .info-item span { display: block; color: #7687a6; font-size: 0.8rem; font-weight: 300; margin-bottom: 6px; }
-              .info-item strong { font-size: 1rem; color: #ffffff; }
-              .info-item.highlight { border-color: rgba(0, 242, 254, 0.3); background: rgba(0, 242, 254, 0.02); }
-              .info-item.highlight strong { color: #00f2fe; font-weight: 700; }
-              .progress-container { background: rgba(22, 27, 54, 0.5); border-radius: 18px; padding: 20px; margin-bottom: 35px; border: 1px solid rgba(255, 255, 255, 0.05); text-align: right; }
-              .progress-label { display: flex; justify-content: space-between; font-size: 0.9rem; color: #7687a6; margin-bottom: 12px; }
-              .progress-usage { color: #00f2fe; font-weight: bold; }
-              .progress-bar-bg { background: #07080f; border-radius: 12px; height: 14px; width: 100%; overflow: hidden; display: flex; justify-content: flex-start; direction: ltr; }
-              .progress-bar-fill { background: ${progressBarColor}; height: 100%; width: ${percentUsed}%; box-shadow: 0 0 15px rgba(0, 242, 254, 0.3); transition: width 0.5s; }
-              .qr-box { background: white; padding: 16px; border-radius: 20px; display: inline-block; margin-bottom: 35px; border: 2px solid #00f2fe; }
-              .btn { background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%); color: #050609; border: none; padding: 15px 25px; border-radius: 14px; font-weight: 700; cursor: pointer; width: 100%; font-size: 1.05rem; box-shadow: 0 5px 15px rgba(0, 242, 254, 0.3); margin-bottom: 35px; font-family: 'Vazirmatn', sans-serif; }
+              body { background: radial-gradient(circle at 50% 50%, #121526 0%, #050609 100%); color: #f1f3f9; font-family: 'Vazirmatn', system-ui, sans-serif; margin: 0; padding: 12px; display: flex; justify-content: center; align-items: center; min-height: 100vh; line-height: 1.5; box-sizing: border-box; }
+              .card { background: rgba(13, 16, 33, 0.7); border: 1px solid rgba(0, 242, 254, 0.35); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6), 0 0 15px rgba(0, 242, 254, 0.1); border-radius: 22px; padding: 25px 20px; max-width: 440px; width: 100%; text-align: center; backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); box-sizing: border-box; }
+              h1 { color: #00f2fe; text-shadow: 0 0 10px rgba(0, 242, 254, 0.5); font-size: 2.2rem; font-weight: 700; margin: 0; }
+              .brand-badge { font-size: 0.7rem; background: rgba(0, 242, 254, 0.08); border: 1px solid rgba(0, 242, 254, 0.6); color: #00f2fe; padding: 1px 8px; border-radius: 8px; display: inline-block; margin-bottom: 4px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
+              .subtitle { color: #6f7d99; font-size: 0.85rem; margin-bottom: 20px; font-weight: 300; }
+              .status-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(18, 22, 43, 0.8); padding: 8px 18px; border-radius: 50px; border: 1px solid ${statusColor}; font-size: 0.8rem; margin-bottom: 22px; box-shadow: 0 0 8px rgba(${isUserActive ? '0,242,254' : '255,0,127'}, 0.15); }
+              .status-dot { width: 8px; height: 8px; background-color: ${statusColor}; border-radius: 50%; box-shadow: 0 0 10px ${statusColor}; animation: neonPulse 2s infinite ease-in-out; }
+              @keyframes neonPulse { 0%, 100% { transform: scale(0.9); opacity: 0.5; } 50% { transform: scale(1.1); opacity: 1; } }
               
-              .apps-section { border-top: 1px solid rgba(255, 255, 255, 0.06); padding-top: 30px; margin-bottom: 25px; }
-              .apps-title { color: #00f2fe; font-size: 1.1rem; font-weight: 700; margin-bottom: 20px; }
-              .accordion-item { margin-bottom: 14px; background: rgba(22, 27, 54, 0.3); border: 1px solid rgba(255, 255, 255, 0.04); border-radius: 14px; overflow: hidden; text-align: right; }
-              .accordion-header { padding: 15px 20px; font-size: 0.95rem; font-weight: 700; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-              .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; background: rgba(5, 6, 9, 0.4); display: flex; flex-direction: column; }
-              .sub-link { padding: 14px 22px; color: #a2b1cd; text-decoration: none; font-size: 0.9rem; border-top: 1px solid rgba(255, 255, 255, 0.03); }
-              .sub-link:hover { color: #00f2fe; background: rgba(0, 242, 254, 0.03); padding-right: 28px; }
-              .accordion-item.active .accordion-content { max-height: 250px; }
+              .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+              .info-item { background: rgba(22, 27, 54, 0.45); padding: 10px 12px; border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.03); text-align: right; }
+              .full-width { grid-column: span 2; }
+              .info-item span { display: block; color: #7687a6; font-size: 0.75rem; font-weight: 300; margin-bottom: 3px; }
+              .info-item strong { font-size: 0.9rem; color: #ffffff; font-weight: 400; word-break: break-all; }
+              .info-item.highlight { border-color: rgba(0, 242, 254, 0.25); background: rgba(0, 242, 254, 0.01); }
+              .info-item.highlight strong { color: #00f2fe; font-weight: 700; }
+              
+              .progress-container { background: rgba(22, 27, 54, 0.45); border-radius: 14px; padding: 14px; margin-bottom: 25px; border: 1px solid rgba(255, 255, 255, 0.03); text-align: right; }
+              .progress-label { display: flex; justify-content: space-between; font-size: 0.8rem; color: #7687a6; margin-bottom: 8px; }
+              .progress-usage { color: #00f2fe; font-weight: 700; }
+              .progress-bar-bg { background: #07080f; border-radius: 10px; height: 11px; width: 100%; overflow: hidden; display: flex; justify-content: flex-start; direction: ltr; }
+              .progress-bar-fill { background: ${progressBarColor}; height: 100%; width: ${percentUsed}%; box-shadow: 0 0 10px rgba(0, 242, 254, 0.4); transition: width 0.5s; }
+              
+              .qr-box { background: white; padding: 10px; border-radius: 14px; display: inline-block; margin-bottom: 25px; border: 1px solid rgba(0, 242, 254, 0.5); line-height: 0; }
+              .qr-box canvas, .qr-box img { width: 130px !important; height: 130px !important; }
+              
+              .btn { background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%); color: #050609; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 700; cursor: pointer; width: 100%; font-size: 0.95rem; box-shadow: 0 4px 12px rgba(0, 242, 254, 0.25); margin-bottom: 25px; font-family: 'Vazirmatn', sans-serif; transition: all 0.2s; }
+              .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0, 242, 254, 0.4); }
+              
+              .apps-section { border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 22px; margin-bottom: 22px; }
+              .apps-title { color: #00f2fe; font-size: 0.95rem; font-weight: 700; margin-bottom: 14px; }
+              .accordion-item { margin-bottom: 10px; background: rgba(22, 27, 54, 0.25); border: 1px solid rgba(255, 255, 255, 0.03); border-radius: 10px; overflow: hidden; text-align: right; }
+              .accordion-header { padding: 11px 16px; font-size: 0.85rem; font-weight: 700; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+              .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.25s ease-out; background: rgba(5, 6, 9, 0.3); display: flex; flex-direction: column; }
+              .sub-link { padding: 11px 18px; color: #a2b1cd; text-decoration: none; font-size: 0.8rem; border-top: 1px solid rgba(255, 255, 255, 0.02); }
+              .sub-link:hover { color: #00f2fe; background: rgba(0, 242, 254, 0.02); padding-right: 22px; }
+              .accordion-item.active .accordion-content { max-height: 200px; }
               .accordion-item.active .accordion-header { color: #00f2fe; }
               
-              /* دکمه‌های جدید پشتیبانی تلگرام و کانال */
-              .tg-section { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; border-top: 1px solid rgba(255, 255, 255, 0.06); padding-top: 25px; }
-              .tg-btn { display: flex; align-items: center; justify-content: center; gap: 8px; background: rgba(22, 27, 54, 0.6); border: 1px solid #24A1DE; color: #fff; padding: 12px; border-radius: 14px; text-decoration: none; font-size: 0.9rem; font-weight: bold; transition: all 0.2s; }
-              .tg-btn:hover { background: #24A1DE; color: #050609; box-shadow: 0 0 15px rgba(36, 161, 222, 0.4); }
+              .tg-section { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 22px; }
+              .tg-btn { display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(22, 27, 54, 0.4); border: 1px solid #24A1DE; color: #fff; padding: 10px; border-radius: 12px; text-decoration: none; font-size: 0.8rem; font-weight: bold; transition: all 0.2s; }
+              .tg-btn:hover { background: #24A1DE; color: #050609; box-shadow: 0 0 12px rgba(36, 161, 222, 0.35); }
               .tg-btn.channel { border-color: #9d4edd; }
-              .tg-btn.channel:hover { background: #9d4edd; box-shadow: 0 0 15px rgba(157, 78, 221, 0.4); }
+              .tg-btn.channel:hover { background: #9d4edd; color: #fff; box-shadow: 0 0 12px rgba(157, 78, 221, 0.35); }
           </style>
       </head>
       <body>
           <div class="card">
-              <div class="brand-badge">Official Client</div>
+              <div class="brand-badge">SibVPN Official Dashboard</div>
               <h1>SibVPN</h1>
               <div class="subtitle">سامانه مدیریت هوشمند اشتراک کاربری</div>
               
@@ -208,7 +211,7 @@ export default async (req, context) => {
               </div>
           </div>
           <script>
-              new QRCode(document.getElementById("qrcode"), { text: "${currentUrl}", width: 160, height: 160 });
+              new QRCode(document.getElementById("qrcode"), { text: "${currentUrl}", width: 130, height: 130 });
               function copyLink() { navigator.clipboard.writeText("${currentUrl}"); alert("لینک اشتراک SibVPN کپی شد!"); }
               function toggleAccordion(header) {
                   const item = header.parentElement;
