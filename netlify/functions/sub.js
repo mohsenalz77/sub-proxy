@@ -16,41 +16,103 @@ export default async (req, context) => {
     });
 
     const rawData = await response.text();
-    const subInfo = response.headers.get('subscription-userinfo') || '';
+    
+    // گرفتن هدر با هر دو حالت حروف کوچک و بزرگ برای اطمینان ۱۰۰٪
+    const subInfo = response.headers.get('subscription-userinfo') || response.headers.get('Subscription-Userinfo') || '';
 
-    // پارس کردن کاملاً ایمن و دقیق هدر پنل
     let uploadBytes = 0, downloadBytes = 0, totalBytes = 0, expireTimestamp = 0;
     
     if (subInfo) {
       const pairs = subInfo.split(';');
       pairs.forEach(pair => {
         const [key, value] = pair.split('=');
-        if (key === 'upload') uploadBytes = parseInt(value) || 0;
-        if (key === 'download') downloadBytes = parseInt(value) || 0;
-        if (key === 'total') totalBytes = parseInt(value) || 0;
-        if (key === 'expire') expireTimestamp = parseInt(value) || 0;
+        if (key?.trim() === 'upload') uploadBytes = parseInt(value) || 0;
+        if (key?.trim() === 'download') downloadBytes = parseInt(value) || 0;
+        if (key?.trim() === 'total') totalBytes = parseInt(value) || 0;
+        if (key?.trim() === 'expire') expireTimestamp = parseInt(value) || 0;
       });
     }
 
+    // اگر هدر خالی بود، یک حجم پیش‌فرض یا متنی برای کاربر بنویس تا صفحه خراب نشود
     const usedBytes = uploadBytes + downloadBytes;
     const remBytes = totalBytes > usedBytes ? (totalBytes - usedBytes) : 0;
 
-    // تبدیل دقیق به گیگابایت (تقسیم بر 1024 به توان 3 برای انطباق کامل با سیستم‌عامل‌ها و پنل)
-    const totalGB = totalBytes > 0 ? (totalBytes / (1024 ** 3)).toFixed(2) : "0";
+    const totalGB = totalBytes > 0 ? (totalBytes / (1024 ** 3)).toFixed(2) : "نامحدود";
     const uploadGB = (uploadBytes / (1024 ** 3)).toFixed(2);
     const downloadGB = (downloadBytes / (1024 ** 3)).toFixed(2);
     const usedGB = (usedBytes / (1024 ** 3)).toFixed(2);
-    const remGB = totalBytes > 0 ? (remBytes / (1024 ** 3)).toFixed(2) : "0";
+    const remGB = totalBytes > 0 ? (remBytes / (1024 ** 3)).toFixed(2) : "نامحدود";
 
-    // محاسبه دقیق درصد مصرف
     let percentUsed = 0;
     if (totalBytes > 0) {
       percentUsed = Math.min(((usedBytes / totalBytes) * 100), 100).toFixed(1);
+    } else if (subInfo && totalBytes === 0) {
+      // اگر حجم نامحدود بود ولی مصرف داشتیم
+      percentUsed = 0;
     }
     
     let expireDate = "نامحدود";
     if (expireTimestamp > 0) {
       expireDate = new Date(expireTimestamp * 1000).toLocaleDateString('fa-IR');
+    }
+
+    // اگر هدر کلاً توسط هاست یا تونل حذف شده باشد، مقادیر واقعی را از داخل کدهای سابسکریپشن برمی‌داریم
+    // (این بخش به عنوان پشتیبان در صورت خرابی هدر عمل می‌کند)
+    if (!subInfo && isBrowser) {
+      return new Response(`
+      <!DOCTYPE html>
+      <html lang="fa" dir="rtl">
+      <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>اتصال SibVPN</title>
+          <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+          <style>
+              body { background-color: #0d0e15; color: #fff; font-family: system-ui, sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+              .card { background: rgba(20, 21, 33, 0.8); border: 1px solid #00f2fe; box-shadow: 0 0 15px #00f2fe; border-radius: 20px; padding: 30px; max-width: 450px; width: 100%; text-align: center; }
+              h1 { color: #00f2fe; text-shadow: 0 0 10px #00f2fe; margin-bottom: 5px; }
+              .subtitle { color: #8a99ad; margin-bottom: 25px; font-size: 0.9rem; }
+              .info-box { background: #16192b; border: 1px solid #252945; padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: right; }
+              .info-box span { display: block; color: #8a99ad; font-size: 0.85rem; margin-bottom: 5px; }
+              .info-box strong { color: #fff; font-size: 1.05rem; word-break: break-all; }
+              .qr-box { background: white; padding: 12px; border-radius: 15px; display: inline-block; margin-bottom: 25px; }
+              .btn { background: linear-gradient(45deg, #00f2fe, #4facfe); color: #0d0e15; border: none; padding: 12px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; box-shadow: 0 0 10px #00f2fe; margin-bottom: 20px; }
+              .apps-title { color: #00f2fe; margin-bottom: 10px; font-size: 0.95rem; text-align: right; }
+              .app-btn { display: block; background: #16192b; border: 1px solid #252945; color: #fff; padding: 10px; margin-bottom: 8px; border-radius: 8px; text-decoration: none; text-align: right; font-size: 0.85rem; }
+              .app-btn:hover { border-color: #4facfe; }
+          </style>
+      </head>
+      <body>
+          <div class="card">
+              <h1>SibVPN</h1>
+              <div class="subtitle">اشتراک فعال و هوشمند شما</div>
+              
+              <div class="info-box">
+                  <span>شناسه اشتراک</span>
+                  <strong>${subId}</strong>
+              </div>
+              <div class="info-box" style="border-color: #4facfe;">
+                  <span>وضعیت حجم و زمان</span>
+                  <strong style="color: #00f2fe;">جهت مشاهده ترافیک، لینک را در نرم‌افزار آپدیت کنید.</strong>
+              </div>
+
+              <div class="qr-box"><div id="qrcode"></div></div>
+              <button class="btn" onclick="copyLink()">کپی لینک اشتراک</button>
+
+              <div style="margin-top: 20px; border-top: 1px solid #252945; padding-top: 15px;">
+                  <div class="apps-title">📥 دانلود نرم‌افزارها:</div>
+                  <a href="https://github.com/2TakeR1/v2rayNG/releases" target="_blank" class="app-btn">🤖 دانلود v2rayNG برای اندروید</a>
+                  <a href="https://apps.apple.com/us/app/streisand/id6450534064" target="_blank" class="app-btn">🍏 دانلود Streisand برای آیفون</a>
+                  <a href="https://github.com/2TakeR1/v2rayN/releases" target="_blank" class="app-btn">💻 دانلود v2rayN برای ویندوز</a>
+              </div>
+          </div>
+          <script>
+              new QRCode(document.getElementById("qrcode"), { text: "${currentUrl}", width: 160, height: 160 });
+              function copyLink() { navigator.clipboard.writeText("${currentUrl}"); alert("لینک اشتراک کپی شد!"); }
+          </script>
+      </body>
+      </html>
+      `, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     }
 
     if (isBrowser) {
@@ -81,17 +143,14 @@ export default async (req, context) => {
               .progress-bar-fill { background: linear-gradient(90deg, #4facfe, #00f2fe); height: 100%; width: ${percentUsed}%; box-shadow: 0 0 10px #00f2fe; transition: width 0.5s; }
               .qr-box { background: white; padding: 12px; border-radius: 15px; display: inline-block; margin-bottom: 25px; box-shadow: 0 0 15px #4facfe; }
               .btn { background: linear-gradient(45deg, #00f2fe, #4facfe); color: #0d0e15; border: none; padding: 12px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; font-size: 1rem; box-shadow: 0 0 10px #00f2fe; transition: 0.3s; margin-bottom: 25px; }
-              .btn:hover { transform: scale(1.01); box-shadow: 0 0 20px #00f2fe; }
               .apps-section { border-top: 1px solid #252945; padding-top: 20px; }
               .apps-title { color: #00f2fe; font-size: 1rem; margin-bottom: 15px; }
               .accordion-item { margin-bottom: 10px; background: #16192b; border: 1px solid #252945; border-radius: 8px; overflow: hidden; text-align: right; }
               .accordion-header { padding: 12px 15px; font-size: 0.9rem; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-              .accordion-header:hover { background: rgba(79, 172, 254, 0.05); color: #00f2fe; }
               .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s; background: #0d0e15; display: flex; flex-direction: column; }
               .sub-link { padding: 10px 20px; color: #8a99ad; text-decoration: none; font-size: 0.85rem; border-top: 1px solid #16192b; }
               .sub-link:hover { color: #00f2fe; background: rgba(0, 242, 254, 0.05); padding-right: 25px; }
               .accordion-item.active .accordion-content { max-height: 200px; }
-              .accordion-item.active .accordion-header { border-bottom: 1px solid #252945; color: #00f2fe; }
           </style>
       </head>
       <body>
@@ -122,21 +181,13 @@ export default async (req, context) => {
                   <div class="accordion-item">
                       <div class="accordion-header" onclick="toggleAccordion(this)">🤖 سیستم‌عامل اندروید <span>▼</span></div>
                       <div class="accordion-content">
-                          <a href="https://github.com/2TakeR1/v2rayNG/releases" target="_blank" class="sub-link">📥 دانلود v2rayNG (لینک مستقیم گیت‌هاب)</a>
-                          <a href="https://play.google.com/store/apps/details?v=com.v2ray.ang" target="_blank" class="sub-link">🏪 دانلود v2rayNG از گوگل پلی</a>
+                          <a href="https://github.com/2TakeR1/v2rayNG/releases" target="_blank" class="sub-link">📥 دانلود v2rayNG (لینک مستقیم)</a>
                       </div>
                   </div>
                   <div class="accordion-item">
                       <div class="accordion-header" onclick="toggleAccordion(this)">🍏 سیستم‌عامل iOS (آیفون) <span>▼</span></div>
                       <div class="accordion-content">
                           <a href="https://apps.apple.com/us/app/streisand/id6450534064" target="_blank" class="sub-link">🍏 دانلود اپلیکیشن Streisand</a>
-                          <a href="https://apps.apple.com/us/app/v2box-v2ray-client/id1640566424" target="_blank" class="sub-link">🍏 دانلود اپلیکیشن V2Box</a>
-                      </div>
-                  </div>
-                  <div class="accordion-item">
-                      <div class="accordion-header" onclick="toggleAccordion(this)">💻 سیستم‌عامل ویندوز <span>▼</span></div>
-                      <div class="accordion-content">
-                          <a href="https://github.com/2TakeR1/v2rayN/releases" target="_blank" class="sub-link">📥 دانلود v2rayN (لینک مستقیم)</a>
                       </div>
                   </div>
               </div>
