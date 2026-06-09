@@ -2,8 +2,8 @@ export default async (req, context) => {
   const PANEL_BASE_URL = 'https://sub.dr-sib.fun:2096'; 
   
   // ⚠️ آیدی تلگرام پشتیبانی و کانال خود را اینجا بدون @ وارد کنید:
-  const TELEGRAM_SUPPORT = 'YOUR_SUPPORT_USERNAME'; 
-  const TELEGRAM_CHANNEL = 'YOUR_CHANNEL_USERNAME'; 
+  const TELEGRAM_SUPPORT = 'Sibvpn_support'; 
+  const TELEGRAM_CHANNEL = 'sibvpn'; 
 
   const url = new URL(req.url);
   const cleanPath = url.pathname.replace('/.netlify/functions/sub', '');
@@ -183,21 +183,21 @@ export default async (req, context) => {
                   <div class="accordion-item">
                       <div class="accordion-header" onclick="toggleAccordion(this)">🤖 سیستم‌عامل اندروید <span>▼</span></div>
                       <div class="accordion-content">
-                          <a href="https://github.com/2TakeR1/v2rayNG/releases" target="_blank" class="sub-link">📥 دانلود v2rayNG (لینک مستقیم)</a>
-                          <a href="https://play.google.com/store/apps/details?v=com.v2ray.ang" target="_blank" class="sub-link">🏪 دانلود v2rayNG از گوگل پلی</a>
+                          <a href="https://github.com/2dust/v2rayNG/releases/download/2.2.3/v2rayNG_2.2.3_universal.apk" target="_blank" class="sub-link">📥 دانلود v2rayNG (لینک مستقیم)</a>
+                          <a href="https://play.google.com/store/apps/details?id=dev.hexasoftware.v2box" target="_blank" class="sub-link">🏪 دانلود v2box از گوگل پلی</a>
                       </div>
                   </div>
                   <div class="accordion-item">
                       <div class="accordion-header" onclick="toggleAccordion(this)">🍏 سیستم‌عامل iOS (آیفون / آیپد) <span>▼</span></div>
                       <div class="accordion-content">
                           <a href="https://apps.apple.com/us/app/streisand/id6450534064" target="_blank" class="sub-link">🍏 دانلود اپلیکیشن Streisand</a>
-                          <a href="https://apps.apple.com/us/app/v2box-v2ray-client/id1640566424" target="_blank" class="sub-link">🍏 دانلود اپلیکیشن V2Box</a>
+                          <a href="https://apps.apple.com/us/app/v2box-v2ray-client/id6446814690" target="_blank" class="sub-link">🍏 دانلود اپلیکیشن V2Box</a>
                       </div>
                   </div>
                   <div class="accordion-item">
                       <div class="accordion-header" onclick="toggleAccordion(this)">💻 سیستم‌عامل ویندوز (کامپیوتر) <span>▼</span></div>
                       <div class="accordion-content">
-                          <a href="https://github.com/2TakeR1/v2rayN/releases" target="_blank" class="sub-link">📥 دانلود v2rayN (نسخه رسمی کامپیوتر)</a>
+                          <a href="https://github.com/2dust/v2rayN/releases/download/7.22.5/v2rayN-windows-64.zip" target="_blank" class="sub-link">📥 دانلود v2rayN (نسخه رسمی کامپیوتر)</a>
                       </div>
                   </div>
               </div>
