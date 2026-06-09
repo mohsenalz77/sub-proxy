@@ -1,5 +1,9 @@
 export default async (req, context) => {
   const PANEL_BASE_URL = 'https://sub.dr-sib.fun:2096'; 
+  
+  // ⚠️ آیدی تلگرام پشتیبانی و کانال خود را اینجا بدون @ وارد کنید:
+  const TELEGRAM_SUPPORT = 'YOUR_SUPPORT_USERNAME'; 
+  const TELEGRAM_CHANNEL = 'YOUR_CHANNEL_USERNAME'; 
 
   const url = new URL(req.url);
   const cleanPath = url.pathname.replace('/.netlify/functions/sub', '');
@@ -43,6 +47,14 @@ export default async (req, context) => {
       percentUsed = Math.min(((usedBytes / totalBytes) * 100), 100).toFixed(1);
     }
     
+    // تعیین رنگ نوار حجم بر اساس میزان مصرف
+    let progressBarColor = "linear-gradient(90deg, #00f2fe 0%, #4facfe 100%)"; // فیروزه‌ای (پیش‌فرض زیر ۵۰ درصد)
+    if (percentUsed >= 50 && percentUsed < 80) {
+      progressBarColor = "linear-gradient(90deg, #f7971e 0%, #ffd200 100%)"; // نارنجی (بین ۵۰ تا ۸۰ درصد)
+    } else if (percentUsed >= 80) {
+      progressBarColor = "linear-gradient(90deg, #ff007f 0%, #ff0055 100%)"; // قرمز (بالای ۸۰ درصد)
+    }
+    
     let expireDate = "نامحدود";
     if (expireTimestamp > 0 && expireTimestamp < 253402300799) {
       expireDate = new Date(expireTimestamp * 1000).toLocaleDateString('fa-IR', { timeZone: 'Asia/Tehran' });
@@ -53,8 +65,6 @@ export default async (req, context) => {
     
     try {
       const decodedText = Buffer.from(rawData.trim(), 'base64').toString('utf-8');
-      
-      // تشخیص دقیق غیرفعال بودن بر اساس دیتای خام دریافتی شما
       if (decodedText.includes('N/A') || decodedText.includes('disabled') || decodedText.includes('Disabled') || decodedText.includes('⛔') || decodedText.includes('🛑') || decodedText.includes('%E2%9B%94')) {
         isPanelDisabled = true;
       }
@@ -90,13 +100,14 @@ export default async (req, context) => {
       <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>داشبورد اشتراک SibVPN</title>
+          <title>داشبورد اختصاصی SibVPN</title>
           <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
           <style>
               @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;700&display=swap');
               body { background: radial-gradient(circle at 50% 50%, #121526 0%, #050609 100%); color: #f1f3f9; font-family: 'Vazirmatn', system-ui, sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; line-height: 1.6; }
               .card { background: rgba(13, 16, 33, 0.65); border: 1px solid rgba(0, 242, 254, 0.4); box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 242, 254, 0.15); border-radius: 28px; padding: 40px 30px; max-width: 470px; width: 100%; text-align: center; backdrop-filter: blur(20px); }
-              h1 { color: #00f2fe; text-shadow: 0 0 15px rgba(0, 242, 254, 0.6); font-size: 2.6rem; font-weight: 700; margin: 0; }
+              h1 { color: #00f2fe; text-shadow: 0 0 15px rgba(0, 242, 254, 0.6); font-size: 2.8rem; font-weight: 700; margin: 0; }
+              .brand-badge { font-size: 0.75rem; background: rgba(0, 242, 254, 0.1); border: 1px solid #00f2fe; color: #00f2fe; padding: 2px 10px; border-radius: 10px; display: inline-block; margin-bottom: 5px; text-transform: uppercase; font-weight: 700; }
               .subtitle { color: #6f7d99; font-size: 0.95rem; margin-bottom: 30px; }
               .status-badge { display: inline-flex; align-items: center; gap: 12px; background: rgba(18, 22, 43, 0.7); padding: 10px 24px; border-radius: 50px; border: 1px solid ${statusColor}; font-size: 0.9rem; margin-bottom: 30px; box-shadow: 0 0 10px rgba(${isUserActive ? '0,242,254' : '255,0,127'}, 0.2); }
               .status-dot { width: 9px; height: 9px; background-color: ${statusColor}; border-radius: 50%; box-shadow: 0 0 12px ${statusColor}, 0 0 25px ${statusColor}; animation: neonPulse 2s infinite ease-in-out; }
@@ -112,10 +123,11 @@ export default async (req, context) => {
               .progress-label { display: flex; justify-content: space-between; font-size: 0.9rem; color: #7687a6; margin-bottom: 12px; }
               .progress-usage { color: #00f2fe; font-weight: bold; }
               .progress-bar-bg { background: #07080f; border-radius: 12px; height: 14px; width: 100%; overflow: hidden; display: flex; justify-content: flex-start; direction: ltr; }
-              .progress-bar-fill { background: linear-gradient(90deg, #9d4edd 0%, #00f2fe 100%); height: 100%; width: ${percentUsed}%; box-shadow: 0 0 15px rgba(0, 242, 254, 0.5); }
-              .qr-box { background: white; padding: 16px; border-radius: 20px; display: inline-block; margin-bottom: 35px; }
+              .progress-bar-fill { background: ${progressBarColor}; height: 100%; width: ${percentUsed}%; box-shadow: 0 0 15px rgba(0, 242, 254, 0.3); transition: width 0.5s; }
+              .qr-box { background: white; padding: 16px; border-radius: 20px; display: inline-block; margin-bottom: 35px; border: 2px solid #00f2fe; }
               .btn { background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%); color: #050609; border: none; padding: 15px 25px; border-radius: 14px; font-weight: 700; cursor: pointer; width: 100%; font-size: 1.05rem; box-shadow: 0 5px 15px rgba(0, 242, 254, 0.3); margin-bottom: 35px; font-family: 'Vazirmatn', sans-serif; }
-              .apps-section { border-top: 1px solid rgba(255, 255, 255, 0.06); padding-top: 30px; }
+              
+              .apps-section { border-top: 1px solid rgba(255, 255, 255, 0.06); padding-top: 30px; margin-bottom: 25px; }
               .apps-title { color: #00f2fe; font-size: 1.1rem; font-weight: 700; margin-bottom: 20px; }
               .accordion-item { margin-bottom: 14px; background: rgba(22, 27, 54, 0.3); border: 1px solid rgba(255, 255, 255, 0.04); border-radius: 14px; overflow: hidden; text-align: right; }
               .accordion-header { padding: 15px 20px; font-size: 0.95rem; font-weight: 700; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
@@ -124,10 +136,18 @@ export default async (req, context) => {
               .sub-link:hover { color: #00f2fe; background: rgba(0, 242, 254, 0.03); padding-right: 28px; }
               .accordion-item.active .accordion-content { max-height: 250px; }
               .accordion-item.active .accordion-header { color: #00f2fe; }
+              
+              /* دکمه‌های جدید پشتیبانی تلگرام و کانال */
+              .tg-section { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; border-top: 1px solid rgba(255, 255, 255, 0.06); padding-top: 25px; }
+              .tg-btn { display: flex; align-items: center; justify-content: center; gap: 8px; background: rgba(22, 27, 54, 0.6); border: 1px solid #24A1DE; color: #fff; padding: 12px; border-radius: 14px; text-decoration: none; font-size: 0.9rem; font-weight: bold; transition: all 0.2s; }
+              .tg-btn:hover { background: #24A1DE; color: #050609; box-shadow: 0 0 15px rgba(36, 161, 222, 0.4); }
+              .tg-btn.channel { border-color: #9d4edd; }
+              .tg-btn.channel:hover { background: #9d4edd; box-shadow: 0 0 15px rgba(157, 78, 221, 0.4); }
           </style>
       </head>
       <body>
           <div class="card">
+              <div class="brand-badge">Official Client</div>
               <h1>SibVPN</h1>
               <div class="subtitle">سامانه مدیریت هوشمند اشتراک کاربری</div>
               
@@ -137,8 +157,8 @@ export default async (req, context) => {
               </div>
 
               <div class="info-grid">
-                  <div class="info-item full-width"><span>شناسه کاربری (Token)</span><strong>${subId}</strong></div>
-                  <div class="info-item full-width highlight"><span>آخرین فعالیت واقعی ثبت شده در پنل</span><strong>${realLastActivity}</strong></div>
+                  <div class="info-item full-width"><span>شناسه کاربری</span><strong>${subId}</strong></div>
+                  <div class="info-item full-width highlight"><span>آخرین فعالیت</span><strong>${realLastActivity}</strong></div>
                   <div class="info-item highlight"><span>حجم کل دوره</span><strong>${totalGB} GB</strong></div>
                   <div class="info-item highlight"><span>حجم باقی‌مانده</span><strong>${remGB} GB</strong></div>
                   <div class="info-item"><span>تاریخ اتمام اعتبار</span><strong>${expireDate}</strong></div>
@@ -156,27 +176,40 @@ export default async (req, context) => {
               </div>
 
               <div class="qr-box"><div id="qrcode"></div></div>
-              <button class="btn" onclick="copyLink()">کپی لینک سابسکریپشن</button>
+              <button class="btn" onclick="copyLink()">کپی لینک سابسکریپشن SibVPN</button>
 
               <div class="apps-section">
-                  <div class="apps-title">📥 دانلود نرم‌افزارهای مورد نیاز</div>
+                  <div class="apps-title">📥 دانلود نرم‌افزارهای SibVPN</div>
                   <div class="accordion-item">
                       <div class="accordion-header" onclick="toggleAccordion(this)">🤖 سیستم‌عامل اندروید <span>▼</span></div>
                       <div class="accordion-content">
                           <a href="https://github.com/2TakeR1/v2rayNG/releases" target="_blank" class="sub-link">📥 دانلود v2rayNG (لینک مستقیم)</a>
+                          <a href="https://play.google.com/store/apps/details?v=com.v2ray.ang" target="_blank" class="sub-link">🏪 دانلود v2rayNG از گوگل پلی</a>
                       </div>
                   </div>
                   <div class="accordion-item">
-                      <div class="accordion-header" onclick="toggleAccordion(this)">🍏 سیستم‌عامل iOS (آیفون) <span>▼</span></div>
+                      <div class="accordion-header" onclick="toggleAccordion(this)">🍏 سیستم‌عامل iOS (آیفون / آیپد) <span>▼</span></div>
                       <div class="accordion-content">
                           <a href="https://apps.apple.com/us/app/streisand/id6450534064" target="_blank" class="sub-link">🍏 دانلود اپلیکیشن Streisand</a>
+                          <a href="https://apps.apple.com/us/app/v2box-v2ray-client/id1640566424" target="_blank" class="sub-link">🍏 دانلود اپلیکیشن V2Box</a>
                       </div>
                   </div>
+                  <div class="accordion-item">
+                      <div class="accordion-header" onclick="toggleAccordion(this)">💻 سیستم‌عامل ویندوز (کامپیوتر) <span>▼</span></div>
+                      <div class="accordion-content">
+                          <a href="https://github.com/2TakeR1/v2rayN/releases" target="_blank" class="sub-link">📥 دانلود v2rayN (نسخه رسمی کامپیوتر)</a>
+                      </div>
+                  </div>
+              </div>
+
+              <div class="tg-section">
+                  <a href="https://t.me/${TELEGRAM_SUPPORT}" target="_blank" class="tg-btn">✈️ پشتیبانی تلگرام</a>
+                  <a href="https://t.me/${TELEGRAM_CHANNEL}" target="_blank" class="tg-btn channel">📢 کانال اطلاع‌رسانی</a>
               </div>
           </div>
           <script>
               new QRCode(document.getElementById("qrcode"), { text: "${currentUrl}", width: 160, height: 160 });
-              function copyLink() { navigator.clipboard.writeText("${currentUrl}"); alert("لینک اشتراک کپی شد!"); }
+              function copyLink() { navigator.clipboard.writeText("${currentUrl}"); alert("لینک اشتراک SibVPN کپی شد!"); }
               function toggleAccordion(header) {
                   const item = header.parentElement;
                   const isActive = item.classList.contains('active');
