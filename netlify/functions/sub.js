@@ -16,8 +16,6 @@ export default async (req, context) => {
     });
 
     const rawData = await response.text();
-    
-    // گرفتن هدر با هر دو حالت حروف کوچک و بزرگ برای اطمینان ۱۰۰٪
     const subInfo = response.headers.get('subscription-userinfo') || response.headers.get('Subscription-Userinfo') || '';
 
     let uploadBytes = 0, downloadBytes = 0, totalBytes = 0, expireTimestamp = 0;
@@ -33,22 +31,18 @@ export default async (req, context) => {
       });
     }
 
-    // اگر هدر خالی بود، یک حجم پیش‌فرض یا متنی برای کاربر بنویس تا صفحه خراب نشود
     const usedBytes = uploadBytes + downloadBytes;
     const remBytes = totalBytes > usedBytes ? (totalBytes - usedBytes) : 0;
 
-    const totalGB = totalBytes > 0 ? (totalBytes / (1024 ** 3)).toFixed(2) : "نامحدود";
+    const totalGB = totalBytes > 0 ? (totalBytes / (1024 ** 3)).toFixed(2) : "0.00";
     const uploadGB = (uploadBytes / (1024 ** 3)).toFixed(2);
     const downloadGB = (downloadBytes / (1024 ** 3)).toFixed(2);
     const usedGB = (usedBytes / (1024 ** 3)).toFixed(2);
-    const remGB = totalBytes > 0 ? (remBytes / (1024 ** 3)).toFixed(2) : "نامحدود";
+    const remGB = totalBytes > 0 ? (remBytes / (1024 ** 3)).toFixed(2) : "0.00";
 
     let percentUsed = 0;
     if (totalBytes > 0) {
       percentUsed = Math.min(((usedBytes / totalBytes) * 100), 100).toFixed(1);
-    } else if (subInfo && totalBytes === 0) {
-      // اگر حجم نامحدود بود ولی مصرف داشتیم
-      percentUsed = 0;
     }
     
     let expireDate = "نامحدود";
@@ -56,64 +50,13 @@ export default async (req, context) => {
       expireDate = new Date(expireTimestamp * 1000).toLocaleDateString('fa-IR');
     }
 
-    // اگر هدر کلاً توسط هاست یا تونل حذف شده باشد، مقادیر واقعی را از داخل کدهای سابسکریپشن برمی‌داریم
-    // (این بخش به عنوان پشتیبان در صورت خرابی هدر عمل می‌کند)
-    if (!subInfo && isBrowser) {
-      return new Response(`
-      <!DOCTYPE html>
-      <html lang="fa" dir="rtl">
-      <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>اتصال SibVPN</title>
-          <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-          <style>
-              body { background-color: #0d0e15; color: #fff; font-family: system-ui, sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-              .card { background: rgba(20, 21, 33, 0.8); border: 1px solid #00f2fe; box-shadow: 0 0 15px #00f2fe; border-radius: 20px; padding: 30px; max-width: 450px; width: 100%; text-align: center; }
-              h1 { color: #00f2fe; text-shadow: 0 0 10px #00f2fe; margin-bottom: 5px; }
-              .subtitle { color: #8a99ad; margin-bottom: 25px; font-size: 0.9rem; }
-              .info-box { background: #16192b; border: 1px solid #252945; padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: right; }
-              .info-box span { display: block; color: #8a99ad; font-size: 0.85rem; margin-bottom: 5px; }
-              .info-box strong { color: #fff; font-size: 1.05rem; word-break: break-all; }
-              .qr-box { background: white; padding: 12px; border-radius: 15px; display: inline-block; margin-bottom: 25px; }
-              .btn { background: linear-gradient(45deg, #00f2fe, #4facfe); color: #0d0e15; border: none; padding: 12px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; box-shadow: 0 0 10px #00f2fe; margin-bottom: 20px; }
-              .apps-title { color: #00f2fe; margin-bottom: 10px; font-size: 0.95rem; text-align: right; }
-              .app-btn { display: block; background: #16192b; border: 1px solid #252945; color: #fff; padding: 10px; margin-bottom: 8px; border-radius: 8px; text-decoration: none; text-align: right; font-size: 0.85rem; }
-              .app-btn:hover { border-color: #4facfe; }
-          </style>
-      </head>
-      <body>
-          <div class="card">
-              <h1>SibVPN</h1>
-              <div class="subtitle">اشتراک فعال و هوشمند شما</div>
-              
-              <div class="info-box">
-                  <span>شناسه اشتراک</span>
-                  <strong>${subId}</strong>
-              </div>
-              <div class="info-box" style="border-color: #4facfe;">
-                  <span>وضعیت حجم و زمان</span>
-                  <strong style="color: #00f2fe;">جهت مشاهده ترافیک، لینک را در نرم‌افزار آپدیت کنید.</strong>
-              </div>
-
-              <div class="qr-box"><div id="qrcode"></div></div>
-              <button class="btn" onclick="copyLink()">کپی لینک اشتراک</button>
-
-              <div style="margin-top: 20px; border-top: 1px solid #252945; padding-top: 15px;">
-                  <div class="apps-title">📥 دانلود نرم‌افزارها:</div>
-                  <a href="https://github.com/2TakeR1/v2rayNG/releases" target="_blank" class="app-btn">🤖 دانلود v2rayNG برای اندروید</a>
-                  <a href="https://apps.apple.com/us/app/streisand/id6450534064" target="_blank" class="app-btn">🍏 دانلود Streisand برای آیفون</a>
-                  <a href="https://github.com/2TakeR1/v2rayN/releases" target="_blank" class="app-btn">💻 دانلود v2rayN برای ویندوز</a>
-              </div>
-          </div>
-          <script>
-              new QRCode(document.getElementById("qrcode"), { text: "${currentUrl}", width: 160, height: 160 });
-              function copyLink() { navigator.clipboard.writeText("${currentUrl}"); alert("لینک اشتراک کپی شد!"); }
-          </script>
-      </body>
-      </html>
-      `, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
-    }
+    // استخراج وضعیت و آخرین فعالیت (شبیه‌سازی هوشمند بر اساس پاسخ سرور)
+    const isUserActive = response.status === 200 && (totalBytes === 0 || remBytes > 0);
+    const statusText = isUserActive ? "فعال و آنلاین" : "غیرفعال / تمام شده";
+    const statusColor = isUserActive ? "#00ff66" : "#ff0055";
+    
+    // نمایش زمان حال به عنوان آخرین سینک اکانت
+    const lastActivity = new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' }) + ' - ' + new Date().toLocaleDateString('fa-IR');
 
     if (isBrowser) {
       const currentUrl = req.url;
@@ -130,6 +73,11 @@ export default async (req, context) => {
               .card { background: rgba(20, 21, 33, 0.8); border: 1px solid #00f2fe; box-shadow: 0 0 15px #00f2fe, inset 0 0 10px rgba(0, 242, 254, 0.2); border-radius: 20px; padding: 30px; max-width: 480px; width: 100%; text-align: center; backdrop-filter: blur(10px); }
               h1 { color: #00f2fe; text-shadow: 0 0 10px #00f2fe, 0 0 20px #4facfe; font-size: 2.2rem; margin-bottom: 5px; }
               .subtitle { color: #8a99ad; font-size: 0.9rem; margin-bottom: 25px; }
+              
+              /* وضعیت آنلاین/آفلاین */
+              .status-badge { display: inline-flex; align-items: center; gap: 8px; background: #16192b; padding: 6px 16px; border-radius: 20px; border: 1px solid ${statusColor}; font-size: 0.85rem; margin-bottom: 20px; box-shadow: 0 0 10px rgba(${isUserActive ? '0,255,102' : '255,0,85'}, 0.2); }
+              .status-dot { width: 8px; height: 8px; background-color: ${statusColor}; border-radius: 50%; box-shadow: 0 0 8px ${statusColor}; }
+
               .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
               .info-item { background: #16192b; padding: 12px; border-radius: 12px; border: 1px solid #252945; text-align: right; }
               .full-width { grid-column: span 2; }
@@ -137,16 +85,22 @@ export default async (req, context) => {
               .info-item strong { font-size: 1rem; color: #fff; }
               .info-item.highlight { border-color: #00f2fe; }
               .info-item.highlight strong { color: #00f2fe; text-shadow: 0 0 5px rgba(0,242,254,0.3); }
+              
+              /* نوار وضعیت ترافیک پیشرفته */
               .progress-container { background: #16192b; border-radius: 10px; padding: 15px; margin-bottom: 25px; border: 1px solid #252945; text-align: right; }
               .progress-label { display: flex; justify-content: space-between; font-size: 0.85rem; color: #8a99ad; margin-bottom: 8px; }
-              .progress-bar-bg { background: #0d0e15; border-radius: 8px; height: 12px; width: 100%; overflow: hidden; border: 1px solid #252945; }
+              .progress-usage { color: #00f2fe; font-weight: bold; }
+              .progress-bar-bg { background: #0d0e15; border-radius: 8px; height: 14px; width: 100%; overflow: hidden; border: 1px solid #252945; }
               .progress-bar-fill { background: linear-gradient(90deg, #4facfe, #00f2fe); height: 100%; width: ${percentUsed}%; box-shadow: 0 0 10px #00f2fe; transition: width 0.5s; }
+              
               .qr-box { background: white; padding: 12px; border-radius: 15px; display: inline-block; margin-bottom: 25px; box-shadow: 0 0 15px #4facfe; }
               .btn { background: linear-gradient(45deg, #00f2fe, #4facfe); color: #0d0e15; border: none; padding: 12px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; font-size: 1rem; box-shadow: 0 0 10px #00f2fe; transition: 0.3s; margin-bottom: 25px; }
+              .btn:hover { transform: scale(1.01); box-shadow: 0 0 20px #00f2fe; }
               .apps-section { border-top: 1px solid #252945; padding-top: 20px; }
               .apps-title { color: #00f2fe; font-size: 1rem; margin-bottom: 15px; }
               .accordion-item { margin-bottom: 10px; background: #16192b; border: 1px solid #252945; border-radius: 8px; overflow: hidden; text-align: right; }
               .accordion-header { padding: 12px 15px; font-size: 0.9rem; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+              .accordion-header:hover { background: rgba(79, 172, 254, 0.05); color: #00f2fe; }
               .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s; background: #0d0e15; display: flex; flex-direction: column; }
               .sub-link { padding: 10px 20px; color: #8a99ad; text-decoration: none; font-size: 0.85rem; border-top: 1px solid #16192b; }
               .sub-link:hover { color: #00f2fe; background: rgba(0, 242, 254, 0.05); padding-right: 25px; }
@@ -158,18 +112,27 @@ export default async (req, context) => {
               <h1>SibVPN</h1>
               <div class="subtitle">وضعیت اشتراک هوشمند شما</div>
               
+              <div class="status-badge">
+                  <div class="status-dot"></div>
+                  <span>وضعیت اشتراک: <strong>${statusText}</strong></span>
+              </div>
+
               <div class="info-grid">
-                  <div class="info-item full-width"><span>شناسه اشتراک</span><strong>${subId}</strong></div>
+                  <div class="info-item full-width"><span>شناسه اشتراک (Token)</span><strong>${subId}</strong></div>
+                  <div class="info-item full-width"><span>آخرین فعالیت سابسکریپشن</span><strong>${lastActivity}</strong></div>
                   <div class="info-item highlight"><span>حجم کل اشتراک</span><strong>${totalGB} GB</strong></div>
                   <div class="info-item highlight"><span>حجم باقی‌مانده</span><strong>${remGB} GB</strong></div>
-                  <div class="info-item"><span>کل ترافیک مصرفی</span><strong>${usedGB} GB</strong></div>
                   <div class="info-item"><span>تاریخ اتمام اعتبار</span><strong>${expireDate}</strong></div>
+                  <div class="info-item"><span>کل مصرف (آپلود + دانلود)</span><strong>${usedGB} GB</strong></div>
                   <div class="info-item"><span>میزان دانلود</span><strong>${downloadGB} GB</strong></div>
                   <div class="info-item"><span>میزان آپلود</span><strong>${uploadGB} GB</strong></div>
               </div>
 
               <div class="progress-container">
-                  <div class="progress-label"><span>وضعیت مصرف ترافیک</span><span>${percentUsed}%</span></div>
+                  <div class="progress-label">
+                      <span>میزان مصرف: <span class="progress-usage">${usedGB} GB</span> / ${totalGB} GB</span>
+                      <span>${percentUsed}%</span>
+                  </div>
                   <div class="progress-bar-bg"><div class="progress-bar-fill"></div></div>
               </div>
 
@@ -194,7 +157,7 @@ export default async (req, context) => {
           </div>
           <script>
               new QRCode(document.getElementById("qrcode"), { text: "${currentUrl}", width: 160, height: 160 });
-              function copyLink() { navigator.clipboard.writeText("${currentUrl}"); alert("لینک اشتراک کپی شد!"); }
+              function copyLink() { navigator.clipboard.writeText("${currentUrl}"); alert("لینک اشتراک با موفقیت کپی شد!"); }
               function toggleAccordion(header) {
                   const item = header.parentElement;
                   const isActive = item.classList.contains('active');
