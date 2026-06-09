@@ -1,11 +1,13 @@
 export default async (req, context) => {
-  const PANEL_SUB_URL = 'https://sub.dr-sib.fun:2096/subdr'; 
+  // آدرس پایه سرور شما بدون بخش سابدر
+  const PANEL_BASE_URL = 'https://sub.dr-sib.fun:2096'; 
 
   const url = new URL(req.url);
   const cleanPath = url.pathname.replace('/.netlify/functions/sub', '');
-  const targetUrl = `${PANEL_SUB_URL}${cleanPath}${url.search}`;
+  
+  // خودکار کلمه /subdr/ را در پشت صحنه به آدرس سرور اضافه می‌کنیم
+  const targetUrl = `${PANEL_BASE_URL}/subdr${cleanPath}${url.search}`;
 
-  // تشخیص اینکه آیا کاربر با مرورگر آمده یا با نرم‌افزار v2ray
   const userAgent = req.headers.get('user-agent') || '';
   const isBrowser = userAgent.includes('Mozilla') || userAgent.includes('Chrome') || userAgent.includes('Safari');
 
@@ -17,7 +19,6 @@ export default async (req, context) => {
       }
     });
 
-    // اگر کاربر با مرورگر آمده بود، مستقیم صفحه وب تمپلیت را با فرمت HTML نشان بده
     if (isBrowser) {
       const htmlData = await response.text();
       return new Response(htmlData, {
@@ -26,12 +27,11 @@ export default async (req, context) => {
       });
     }
 
-    // اگر نرم‌افزار بود، همان کدهای خام را بفرست
     const data = await response.text();
     const headers = new Headers({
       'Content-Type': 'text/plain; charset=utf-8',
       'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-      'profile-title': 'SibVPN' // 👈 اینجا اسم برندت را بنویس
+      'profile-title': 'SibVPN'
     });
 
     if (response.headers.get('subscription-userinfo')) {
