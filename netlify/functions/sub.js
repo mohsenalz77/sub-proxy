@@ -49,13 +49,21 @@ export default async (req, context) => {
     }
 
     let realLastActivity = "";
-    let isPanelDisabled = false; // متغیر تشخیص غیرفعال بودن اکانت
+    let isPanelDisabled = false;
+    
+    // تشخیص فوق‌العاده هوشمند از روی دیتای خام ارسالی پنل
+    const rawDataTrimmed = rawData.trim();
     
     try {
-      const decodedText = Buffer.from(rawData, 'base64').toString('utf-8').trim();
+      const decodedText = Buffer.from(rawDataTrimmed, 'base64').toString('utf-8');
       
-      // چک کردن اموجی ممنوع ⛔ یا کلمه N/A در متن کانفیگ‌ها
-      if (decodedText.includes('%E2%9B%94') || decodedText.includes('N/A') || decodedText.includes('Disabled') || decodedText.includes('disabled')) {
+      // ۱. اگر کلمه N/A یا اموجی ممنوع در متن دکود شده باشد
+      if (decodedText.includes('N/A') || decodedText.includes('disabled') || decodedText.includes('Disabled') || decodedText.includes('⛔') || decodedText.includes('🛑')) {
+        isPanelDisabled = true;
+      }
+      
+      // ۲. راستی‌آزمایی ثانویه: اگر نام کانفیگ حاوی کاراکترهای انکود شده غیرفعال سازی پنل باشد
+      if (decodedText.includes('%E2%9B%94') || decodedText.includes('%F0%9F%9B%91')) {
         isPanelDisabled = true;
       }
 
@@ -78,7 +86,7 @@ export default async (req, context) => {
       realLastActivity = `${now.toLocaleDateString('fa-IR', dateOptions)}، ساعت ${now.toLocaleTimeString('fa-IR', options)}`;
     }
 
-    // شرط نهایی فعال بودن: پاسخ سرور 200 باشد، حجم داشته باشد و پنل سیگنال غیرفعالی (N/A یا اموجی ممنوع) نفرستاده باشد
+    // شرط نهایی و اصلاح شده: اگر پنل غیرفعال لود شده باشد، وضعیت فوراً غیرفعال می‌شود
     const isUserActive = response.status === 200 && (totalBytes === 0 || remBytes > 0) && !isPanelDisabled;
     const statusText = isUserActive ? "اشتراک فعال و متصل" : "اشتراک غیرفعال / منقضی شده";
     const statusColor = isUserActive ? "#00f2fe" : "#ff007f";
@@ -103,25 +111,19 @@ export default async (req, context) => {
               .status-dot { width: 9px; height: 9px; background-color: ${statusColor}; border-radius: 50%; box-shadow: 0 0 12px ${statusColor}, 0 0 25px ${statusColor}; animation: neonPulse 2s infinite ease-in-out; }
               @keyframes neonPulse { 0%, 100% { transform: scale(0.9); opacity: 0.5; } 50% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 15px ${statusColor}; } }
               .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 25px; }
-              .info-item { background: rgba(22, 27, 54, 0.5); padding: 14px 16px; border-radius: 18px; border: 1px solid rgba(255, 255, 255, 0.05); text-align: right; transition: all 0.2s; }
-              .info-item:hover { border-color: ${statusColor}; }
+              .info-item { background: rgba(22, 27, 54, 0.5); padding: 14px 16px; border-radius: 18px; border: 1px solid rgba(255, 255, 255, 0.05); text-align: right; }
               .full-width { grid-column: span 2; }
               .info-item span { display: block; color: #7687a6; font-size: 0.8rem; font-weight: 300; margin-bottom: 6px; }
               .info-item strong { font-size: 1rem; color: #ffffff; }
               .info-item.highlight { border-color: rgba(0, 242, 254, 0.3); background: rgba(0, 242, 254, 0.02); }
-              .info-item.highlight strong { color: #00f2fe; font-weight: 700; text-shadow: 0 0 5px rgba(0,242,254,0.2); }
-              
+              .info-item.highlight strong { color: #00f2fe; font-weight: 700; }
               .progress-container { background: rgba(22, 27, 54, 0.5); border-radius: 18px; padding: 20px; margin-bottom: 35px; border: 1px solid rgba(255, 255, 255, 0.05); text-align: right; }
               .progress-label { display: flex; justify-content: space-between; font-size: 0.9rem; color: #7687a6; margin-bottom: 12px; }
               .progress-usage { color: #00f2fe; font-weight: bold; }
-              
-              /* جهت نوار وضعیت کاملاً از چپ به راست (LTR) */
-              .progress-bar-bg { background: #07080f; border-radius: 12px; height: 14px; width: 100%; overflow: hidden; display: flex; justify-content: flex-start; direction: ltr; border: 1px solid rgba(255, 255, 255, 0.02); }
+              .progress-bar-bg { background: #07080f; border-radius: 12px; height: 14px; width: 100%; overflow: hidden; display: flex; justify-content: flex-start; direction: ltr; }
               .progress-bar-fill { background: linear-gradient(90deg, #9d4edd 0%, #00f2fe 100%); height: 100%; width: ${percentUsed}%; box-shadow: 0 0 15px rgba(0, 242, 254, 0.5); }
-              
-              .qr-box { background: white; padding: 16px; border-radius: 20px; display: inline-block; margin-bottom: 35px; box-shadow: 0 0 15px rgba(0,242,254,0.1); }
-              .btn { background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%); color: #050609; border: none; padding: 15px 25px; border-radius: 14px; font-weight: 700; cursor: pointer; width: 100%; font-size: 1.05rem; box-shadow: 0 5px 15px rgba(0, 242, 254, 0.3); margin-bottom: 35px; font-family: 'Vazirmatn', sans-serif; transition: all 0.2s; }
-              .btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0,242,254,0.5); }
+              .qr-box { background: white; padding: 16px; border-radius: 20px; display: inline-block; margin-bottom: 35px; }
+              .btn { background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%); color: #050609; border: none; padding: 15px 25px; border-radius: 14px; font-weight: 700; cursor: pointer; width: 100%; font-size: 1.05rem; box-shadow: 0 5px 15px rgba(0, 242, 254, 0.3); margin-bottom: 35px; font-family: 'Vazirmatn', sans-serif; }
               .apps-section { border-top: 1px solid rgba(255, 255, 255, 0.06); padding-top: 30px; }
               .apps-title { color: #00f2fe; font-size: 1.1rem; font-weight: 700; margin-bottom: 20px; }
               .accordion-item { margin-bottom: 14px; background: rgba(22, 27, 54, 0.3); border: 1px solid rgba(255, 255, 255, 0.04); border-radius: 14px; overflow: hidden; text-align: right; }
