@@ -18,7 +18,6 @@ export default async (req, context) => {
     const rawData = await response.text();
     const subInfo = response.headers.get('subscription-userinfo') || response.headers.get('Subscription-Userinfo') || '';
 
-    // ۱. محاسبه حجم‌ها و اطلاعات پایه از هدر
     let uploadBytes = 0, downloadBytes = 0, totalBytes = 0, expireTimestamp = 0;
     if (subInfo) {
       subInfo.split(';').forEach(pair => {
@@ -44,37 +43,39 @@ export default async (req, context) => {
       percentUsed = Math.min(((usedBytes / totalBytes) * 100), 100).toFixed(1);
     }
     
+    // تنظیم دقیق تاریخ اتمام بر اساس ساعت ایران
     let expireDate = "نامحدود";
-    if (expireTimestamp > 0) {
-      expireDate = new Date(expireTimestamp * 1000).toLocaleDateString('fa-IR');
+    if (expireTimestamp > 0 && expireTimestamp < 253402300799) { // جلوگیری از نمایش تاریخ‌های خراب بسیار دور
+      expireDate = new Date(expireTimestamp * 1000).toLocaleDateString('fa-IR', { timeZone: 'Asia/Tehran' });
     }
 
-    // ۲. استخراج هوشمندانه تاریخ آخرین فعالیت واقعی از داخل محتوای سابسکریپشن
+    // استخراج تاریخ آخرین فعالیت واقعی و حل مشکل منطقه زمانی
     let realLastActivity = "";
     try {
-      // رمزگشایی متون بیس۶۴ برای پیدا کردن کانفیگ اطلاعاتی پنل
       const decodedText = Buffer.from(rawData, 'base64').toString('utf-8');
       const lines = decodedText.split('\n');
       
-      // جستجو در خطوط برای پیدا کردن متنی که حاوی تاریخ یا کلمه فعالیت است
       for (let line of lines) {
         if (line.includes('activity') || line.includes('last') || line.includes('%D9%81%D8%B9%D8%A7%D9%84%D9%8A%D8%AA')) { 
-          // رمزگشایی URL-encode احتمالی در نام کانفیگ‌ها
           const decodedLine = decodeURIComponent(line);
-          const match = decodedLine.match(/(\d{4}\/\d{2}\/\d{2})/); // پیدا کردن فرمت تاریخ
-          if (match) {
-            realLastActivity = decodedLine.split('#')[1] || decodedLine;
+          if (decodedLine.includes('#')) {
+            realLastActivity = decodedLine.split('#')[1].trim();
             break;
           }
         }
       }
-    } catch (e) {
-      // خطای احتمالی در دکود پنهان شود
-    }
+    } catch (e) {}
 
-    // اگر در کدهای کانفیگ پیدا نشد، از فرمت رسمی زمان حال استفاده کن
+    // اگر در سابسکریپشن پیدا نشد، زمان حال را دقیقاً بر اساس ساعت رسمی ایران محاسبه کن (حل اختلاف ۳.۵ ساعته)
     if (!realLastActivity) {
-      realLastActivity = new Date().toLocaleDateString('fa-IR') + ' ساعت ' + new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+      const now = new Date();
+      const options = { timeZone: 'Asia/Tehran', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+      const dateOptions = { timeZone: 'Asia/Tehran', year: 'numeric', month: '2-digit', day: '2-digit' };
+      
+      const farsiTime = now.toLocaleTimeString('fa-IR', options);
+      const farsiDate = now.toLocaleDateString('fa-IR', dateOptions);
+      
+      realLastActivity = `${farsiDate}، ساعت ${farsiTime}`;
     }
 
     const isUserActive = response.status === 200 && (totalBytes === 0 || remBytes > 0);
@@ -128,7 +129,6 @@ export default async (req, context) => {
               }
               .subtitle { color: #6f7d99; font-size: 0.95rem; font-weight: 300; margin-bottom: 30px; }
               
-              /* وضعیت نئونی متحرک */
               .status-badge { 
                   display: inline-flex; 
                   align-items: center; 
@@ -139,7 +139,6 @@ export default async (req, context) => {
                   border: 1px solid rgba(0, 242, 254, 0.3); 
                   font-size: 0.9rem; 
                   margin-bottom: 30px; 
-                  box-shadow: inset 0 0 10px rgba(0, 242, 254, 0.05);
               }
               .status-dot { 
                   width: 9px; 
@@ -154,7 +153,6 @@ export default async (req, context) => {
                   50% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 18px ${statusColor}, 0 0 30px ${statusColor}; }
               }
 
-              /* شبکه اطلاعات کاربری */
               .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 25px; }
               .info-item { 
                   background: rgba(22, 27, 54, 0.5); 
@@ -171,7 +169,6 @@ export default async (req, context) => {
               .info-item.highlight { border-color: rgba(0, 242, 254, 0.3); background: rgba(0, 242, 254, 0.02); }
               .info-item.highlight strong { color: #00f2fe; text-shadow: 0 0 10px rgba(0, 242, 254, 0.3); font-weight: 700; }
               
-              /* نوار وضعیت ترافیک سایبرپانک */
               .progress-container { background: rgba(22, 27, 54, 0.5); border-radius: 18px; padding: 20px; margin-bottom: 35px; border: 1px solid rgba(255, 255, 255, 0.05); text-align: right; }
               .progress-label { display: flex; justify-content: space-between; font-size: 0.9rem; color: #7687a6; margin-bottom: 12px; font-weight: 300; }
               .progress-usage { color: #00f2fe; font-weight: 700; }
@@ -180,7 +177,6 @@ export default async (req, context) => {
               
               .qr-box { background: white; padding: 16px; border-radius: 20px; display: inline-block; margin-bottom: 35px; box-shadow: 0 10px 30px rgba(0,0,0,0.3), 0 0 20px rgba(0, 242, 254, 0.15); }
               
-              /* دکمه کپی نئونی */
               .btn { 
                   background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%); 
                   color: #050609; 
@@ -198,7 +194,6 @@ export default async (req, context) => {
               }
               .btn:hover { transform: translateY(-1px); box-shadow: 0 8px 25px rgba(0, 242, 254, 0.6); filter: brightness(1.1); }
               
-              /* منوی آکاردئونی کلاینت‌ها */
               .apps-section { border-top: 1px solid rgba(255, 255, 255, 0.06); padding-top: 30px; }
               .apps-title { color: #00f2fe; font-size: 1.1rem; font-weight: 700; margin-bottom: 20px; text-shadow: 0 0 8px rgba(0,242,254,0.2); }
               .accordion-item { margin-bottom: 14px; background: rgba(22, 27, 54, 0.3); border: 1px solid rgba(255, 255, 255, 0.04); border-radius: 14px; overflow: hidden; text-align: right; transition: all 0.25s ease; }
@@ -226,7 +221,7 @@ export default async (req, context) => {
                   <div class="info-item full-width highlight"><span>آخرین فعالیت واقعی ثبت شده در پنل</span><strong>${realLastActivity}</strong></div>
                   <div class="info-item highlight"><span>حجم کل دوره</span><strong>${totalGB} GB</strong></div>
                   <div class="info-item highlight"><span>حجم باقی‌مانده</span><strong>${remGB} GB</strong></div>
-                  <div class="info-item"><span>تاریخ اتمم اعتبار</span><strong>${expireDate}</strong></div>
+                  <div class="info-item"><span>تاریخ اتمام اعتبار</span><strong>${expireDate}</strong></div>
                   <div class="info-item"><span>کل ترافیک مصرفی</span><strong>${usedGB} GB</strong></div>
                   <div class="info-item"><span>میزان دانلود</span><strong>${downloadGB} GB</strong></div>
                   <div class="info-item"><span>میزان آپلود</span><strong>${uploadGB} GB</strong></div>
