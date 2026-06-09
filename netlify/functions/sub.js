@@ -51,19 +51,11 @@ export default async (req, context) => {
     let realLastActivity = "";
     let isPanelDisabled = false;
     
-    // تشخیص فوق‌العاده هوشمند از روی دیتای خام ارسالی پنل
-    const rawDataTrimmed = rawData.trim();
-    
     try {
-      const decodedText = Buffer.from(rawDataTrimmed, 'base64').toString('utf-8');
+      const decodedText = Buffer.from(rawData.trim(), 'base64').toString('utf-8');
       
-      // ۱. اگر کلمه N/A یا اموجی ممنوع در متن دکود شده باشد
-      if (decodedText.includes('N/A') || decodedText.includes('disabled') || decodedText.includes('Disabled') || decodedText.includes('⛔') || decodedText.includes('🛑')) {
-        isPanelDisabled = true;
-      }
-      
-      // ۲. راستی‌آزمایی ثانویه: اگر نام کانفیگ حاوی کاراکترهای انکود شده غیرفعال سازی پنل باشد
-      if (decodedText.includes('%E2%9B%94') || decodedText.includes('%F0%9F%9B%91')) {
+      // تشخیص دقیق غیرفعال بودن بر اساس دیتای خام دریافتی شما
+      if (decodedText.includes('N/A') || decodedText.includes('disabled') || decodedText.includes('Disabled') || decodedText.includes('⛔') || decodedText.includes('🛑') || decodedText.includes('%E2%9B%94')) {
         isPanelDisabled = true;
       }
 
@@ -86,7 +78,6 @@ export default async (req, context) => {
       realLastActivity = `${now.toLocaleDateString('fa-IR', dateOptions)}، ساعت ${now.toLocaleTimeString('fa-IR', options)}`;
     }
 
-    // شرط نهایی و اصلاح شده: اگر پنل غیرفعال لود شده باشد، وضعیت فوراً غیرفعال می‌شود
     const isUserActive = response.status === 200 && (totalBytes === 0 || remBytes > 0) && !isPanelDisabled;
     const statusText = isUserActive ? "اشتراک فعال و متصل" : "اشتراک غیرفعال / منقضی شده";
     const statusColor = isUserActive ? "#00f2fe" : "#ff007f";
