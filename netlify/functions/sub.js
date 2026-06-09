@@ -1,10 +1,10 @@
 export default async (req, context) => {
-  // آدرس اصلی سرور شما بدون اسلش آخر
-  const PANEL_SUB_URL = 'https://sub.dr-sib.fun:2096'; 
+  // آدرس پارت ثابت پنل شما بدون اسلش آخر
+  const PANEL_SUB_URL = 'https://sub.dr-sib.fun:2096/subdr'; 
 
   const url = new URL(req.url);
   
-  // این خط باعث می‌شود هر چیزی بعد از کلمه sub در لینک نتلیفای بیاید، دقیقاً به سرور شما فرستاده شود
+  // گرفتن توکن کاربر از انتهای لینک نتلیفای
   const cleanPath = url.pathname.replace('/.netlify/functions/sub', '');
   const targetUrl = `${PANEL_SUB_URL}${cleanPath}${url.search}`;
 
@@ -23,6 +23,7 @@ export default async (req, context) => {
       'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
     });
 
+    // انتقال اطلاعات حجم و زمان به نرم‌افزار کاربر
     if (response.headers.get('subscription-userinfo')) {
       headers.set('Subscription-Userinfo', response.headers.get('subscription-userinfo'));
     }
