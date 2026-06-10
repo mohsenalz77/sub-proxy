@@ -1,11 +1,12 @@
-export default async (req, context) => {
+export default async (req) => {
   const PANEL_BASE_URL = 'https://sub.dr-sib.fun:2096'; 
   
   const TELEGRAM_SUPPORT = 'Sibvpn_support'; 
   const TELEGRAM_CHANNEL = 'sibvpn'; 
 
   const url = new URL(req.url);
-  const cleanPath = url.pathname.replace('/.netlify/functions/sub', '');
+  // تنظیم اختصاصی برای هندل کردن ساختار مسیرها در ورسل
+  const cleanPath = url.pathname; 
   const targetUrl = `${PANEL_BASE_URL}/subdr${cleanPath}${url.search}`;
   const subId = cleanPath.replace(/^\//, '') || "نامشخص";
 
@@ -91,7 +92,6 @@ export default async (req, context) => {
     const statusColor = isUserActive ? "#00f2fe" : "#ff007f";
 
     if (isBrowser) {
-      const currentUrl = req.url;
       const htmlPage = `
       <!DOCTYPE html>
       <html lang="fa" dir="rtl">
@@ -211,8 +211,8 @@ export default async (req, context) => {
               </div>
           </div>
           <script>
-              new QRCode(document.getElementById("qrcode"), { text: "${currentUrl}", width: 130, height: 130 });
-              function copyLink() { navigator.clipboard.writeText("${currentUrl}"); alert("لینک اشتراک SibVPN کپی شد!"); }
+              new QRCode(document.getElementById("qrcode"), { text: location.href, width: 130, height: 130 });
+              function copyLink() { navigator.clipboard.writeText(location.href); alert("لینک اشتراک SibVPN کپی شد!"); }
               function toggleAccordion(header) {
                   const item = header.parentElement;
                   const isActive = item.classList.contains('active');
