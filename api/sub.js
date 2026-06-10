@@ -5,7 +5,6 @@ export default async (req) => {
   const TELEGRAM_CHANNEL = 'sibvpn'; 
 
   const url = new URL(req.url);
-  // تنظیم اختصاصی برای هندل کردن ساختار مسیرها در ورسل
   const cleanPath = url.pathname; 
   const targetUrl = `${PANEL_BASE_URL}/subdr${cleanPath}${url.search}`;
   const subId = cleanPath.replace(/^\//, '') || "نامشخص";
@@ -63,7 +62,8 @@ export default async (req) => {
     let isPanelDisabled = false;
     
     try {
-      const decodedText = Buffer.from(rawData.trim(), 'base64').toString('utf-8');
+      // استفاده از متد بهینه‌شده اتوب برای دکود بیس۶۴ در ورسل
+      const decodedText = atob(rawData.trim());
       if (decodedText.includes('N/A') || decodedText.includes('disabled') || decodedText.includes('Disabled') || decodedText.includes('⛔') || decodedText.includes('🛑') || decodedText.includes('%E2%9B%94')) {
         isPanelDisabled = true;
       }
@@ -110,7 +110,6 @@ export default async (req) => {
               .status-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(18, 22, 43, 0.8); padding: 8px 18px; border-radius: 50px; border: 1px solid ${statusColor}; font-size: 0.8rem; margin-bottom: 22px; box-shadow: 0 0 8px rgba(${isUserActive ? '0,242,254' : '255,0,127'}, 0.15); }
               .status-dot { width: 8px; height: 8px; background-color: ${statusColor}; border-radius: 50%; box-shadow: 0 0 10px ${statusColor}; animation: neonPulse 2s infinite ease-in-out; }
               @keyframes neonPulse { 0%, 100% { transform: scale(0.9); opacity: 0.5; } 50% { transform: scale(1.1); opacity: 1; } }
-              
               .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
               .info-item { background: rgba(22, 27, 54, 0.45); padding: 10px 12px; border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.03); text-align: right; }
               .full-width { grid-column: span 2; }
@@ -118,19 +117,14 @@ export default async (req) => {
               .info-item strong { font-size: 0.9rem; color: #ffffff; font-weight: 400; word-break: break-all; }
               .info-item.highlight { border-color: rgba(0, 242, 254, 0.25); background: rgba(0, 242, 254, 0.01); }
               .info-item.highlight strong { color: #00f2fe; font-weight: 700; }
-              
               .progress-container { background: rgba(22, 27, 54, 0.45); border-radius: 14px; padding: 14px; margin-bottom: 25px; border: 1px solid rgba(255, 255, 255, 0.03); text-align: right; }
               .progress-label { display: flex; justify-content: space-between; font-size: 0.8rem; color: #7687a6; margin-bottom: 8px; }
               .progress-usage { color: #00f2fe; font-weight: 700; }
               .progress-bar-bg { background: #07080f; border-radius: 10px; height: 11px; width: 100%; overflow: hidden; display: flex; justify-content: flex-start; direction: ltr; }
               .progress-bar-fill { background: ${progressBarColor}; height: 100%; width: ${percentUsed}%; box-shadow: 0 0 10px rgba(0, 242, 254, 0.4); transition: width 0.5s; }
-              
-              .qr-box { background: white; padding: 10px; border-radius: 14px; display: inline-block; margin-bottom: 25px; border: 1px solid rgba(0, 242, 254, 0.5); line-height: 0; }
+              .qr-box { background: white; padding: 10px; border-radius: 14px; display: inline-block; margin-bottom: 25px; border: 1px solid rgba(0, 242, 254, 0.5); }
               .qr-box canvas, .qr-box img { width: 130px !important; height: 130px !important; }
-              
-              .btn { background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%); color: #050609; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 700; cursor: pointer; width: 100%; font-size: 0.95rem; box-shadow: 0 4px 12px rgba(0, 242, 254, 0.25); margin-bottom: 25px; font-family: 'Vazirmatn', sans-serif; transition: all 0.2s; }
-              .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0, 242, 254, 0.4); }
-              
+              .btn { background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%); color: #050609; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 700; cursor: pointer; width: 100%; font-size: 0.95rem; box-shadow: 0 4px 12px rgba(0, 242, 254, 0.25); margin-bottom: 25px; font-family: 'Vazirmatn', sans-serif; }
               .apps-section { border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 22px; margin-bottom: 22px; }
               .apps-title { color: #00f2fe; font-size: 0.95rem; font-weight: 700; margin-bottom: 14px; }
               .accordion-item { margin-bottom: 10px; background: rgba(22, 27, 54, 0.25); border: 1px solid rgba(255, 255, 255, 0.03); border-radius: 10px; overflow: hidden; text-align: right; }
@@ -140,7 +134,6 @@ export default async (req) => {
               .sub-link:hover { color: #00f2fe; background: rgba(0, 242, 254, 0.02); padding-right: 22px; }
               .accordion-item.active .accordion-content { max-height: 200px; }
               .accordion-item.active .accordion-header { color: #00f2fe; }
-              
               .tg-section { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 22px; }
               .tg-btn { display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(22, 27, 54, 0.4); border: 1px solid #24A1DE; color: #fff; padding: 10px; border-radius: 12px; text-decoration: none; font-size: 0.8rem; font-weight: bold; transition: all 0.2s; }
               .tg-btn:hover { background: #24A1DE; color: #050609; box-shadow: 0 0 12px rgba(36, 161, 222, 0.35); }
@@ -153,12 +146,7 @@ export default async (req) => {
               <div class="brand-badge">SibVPN Official Dashboard</div>
               <h1>SibVPN</h1>
               <div class="subtitle">سامانه مدیریت هوشمند اشتراک کاربری</div>
-              
-              <div class="status-badge">
-                  <div class="status-dot"></div>
-                  <span>وضعیت اتصال: <strong>${statusText}</strong></span>
-              </div>
-
+              <div class="status-badge"><div class="status-dot"></div><span>وضعیت اتصال: <strong>${statusText}</strong></span></div>
               <div class="info-grid">
                   <div class="info-item full-width"><span>شناسه کاربری</span><strong>${subId}</strong></div>
                   <div class="info-item full-width highlight"><span>آخرین فعالیت</span><strong>${realLastActivity}</strong></div>
@@ -169,18 +157,12 @@ export default async (req) => {
                   <div class="info-item"><span>میزان دانلود</span><strong>${downloadGB} GB</strong></div>
                   <div class="info-item"><span>میزان آپلود</span><strong>${uploadGB} GB</strong></div>
               </div>
-
               <div class="progress-container">
-                  <div class="progress-label">
-                      <span>میزان مصرف: <span class="progress-usage">${usedGB} GB</span> / ${totalGB} GB</span>
-                      <span>${percentUsed}%</span>
-                  </div>
+                  <div class="progress-label"><span>میزان مصرف: <span class="progress-usage">${usedGB} GB</span> / ${totalGB} GB</span><span>${percentUsed}%</span></div>
                   <div class="progress-bar-bg"><div class="progress-bar-fill"></div></div>
               </div>
-
               <div class="qr-box"><div id="qrcode"></div></div>
               <button class="btn" onclick="copyLink()">کپی لینک سابسکریپشن SibVPN</button>
-
               <div class="apps-section">
                   <div class="apps-title">📥 دانلود نرم‌افزارهای SibVPN</div>
                   <div class="accordion-item">
@@ -204,7 +186,6 @@ export default async (req) => {
                       </div>
                   </div>
               </div>
-
               <div class="tg-section">
                   <a href="https://t.me/${TELEGRAM_SUPPORT}" target="_blank" class="tg-btn">✈️ پشتیبانی تلگرام</a>
                   <a href="https://t.me/${TELEGRAM_CHANNEL}" target="_blank" class="tg-btn channel">📢 کانال اطلاع‌رسانی</a>
