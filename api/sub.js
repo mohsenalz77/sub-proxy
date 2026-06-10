@@ -1,3 +1,7 @@
+export const config = {
+  runtime: 'edge'
+};
+
 export default async (req) => {
   const PANEL_BASE_URL = 'https://sub.dr-sib.fun:2096'; 
   
@@ -62,7 +66,6 @@ export default async (req) => {
     let isPanelDisabled = false;
     
     try {
-      // استفاده از متد بهینه‌شده اتوب برای دکود بیس۶۴ در ورسل
       const decodedText = atob(rawData.trim());
       if (decodedText.includes('N/A') || decodedText.includes('disabled') || decodedText.includes('Disabled') || decodedText.includes('⛔') || decodedText.includes('🛑') || decodedText.includes('%E2%9B%94')) {
         isPanelDisabled = true;
